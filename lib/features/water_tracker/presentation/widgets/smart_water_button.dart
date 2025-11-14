@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:prac9/core/di/service_locator.dart';
+import 'package:prac9/core/services/ui_logic_service.dart';
 
 class SmartWaterButton extends StatefulWidget {
   final int currentVolume;
@@ -18,31 +20,13 @@ class SmartWaterButton extends StatefulWidget {
 
 class _SmartWaterButtonState extends State<SmartWaterButton> {
   bool _isPressed = false;
-
-  String _getButtonText() {
-    final progress = widget.dailyGoal > 0
-        ? widget.currentVolume / widget.dailyGoal
-        : 0;
-
-    if (progress >= 1.0) return 'Отлично!';
-    if (progress >= 0.8) return 'Почти у цели!';
-    if (progress >= 0.5) return 'Так держать!';
-    return 'Добавить жидкость';
-  }
-
-  Color _getButtonColor() {
-    final progress = widget.dailyGoal > 0
-        ? widget.currentVolume / widget.dailyGoal
-        : 0;
-
-    if (progress >= 1.0) return Colors.green;
-    if (progress >= 0.7) return Colors.blue;
-    if (progress >= 0.4) return Colors.lightBlue;
-    return Colors.blueAccent;
-  }
+  final UILogicService _uiLogicService = serviceLocator<UILogicService>();
 
   @override
   Widget build(BuildContext context) {
+    final buttonText = _uiLogicService.getButtonText(widget.currentVolume, widget.dailyGoal);
+    final buttonColor = _uiLogicService.getButtonColor(widget.currentVolume, widget.dailyGoal);
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -53,13 +37,13 @@ class _SmartWaterButtonState extends State<SmartWaterButton> {
         width: double.infinity,
         height: 60,
         decoration: BoxDecoration(
-          color: _getButtonColor(),
+          color: buttonColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: _isPressed
               ? []
               : [
             BoxShadow(
-              color: _getButtonColor().withOpacity(0.3),
+              color: buttonColor.withOpacity(0.3),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -67,7 +51,7 @@ class _SmartWaterButtonState extends State<SmartWaterButton> {
         ),
         child: Center(
           child: Text(
-            _getButtonText(),
+            buttonText,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 18,

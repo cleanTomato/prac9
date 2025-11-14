@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:prac9/core/di/service_locator.dart';
+import 'package:prac9/core/services/ui_logic_service.dart';
 
 class WaterLevelIndicator extends StatefulWidget {
   final double progress;
@@ -17,6 +19,7 @@ class _WaterLevelIndicatorState extends State<WaterLevelIndicator>
 
   late AnimationController _controller;
   late Animation<double> _animation;
+  final UILogicService _uiLogicService = serviceLocator<UILogicService>();
 
   @override
   void initState() {
@@ -62,6 +65,8 @@ class _WaterLevelIndicatorState extends State<WaterLevelIndicator>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
+        final waterColor = _uiLogicService.getWaterColor(_animation.value);
+
         return Container(
           width: 30,
           height: 150,
@@ -79,7 +84,7 @@ class _WaterLevelIndicatorState extends State<WaterLevelIndicator>
                 child: Container(
                   height: 150 * _animation.value,
                   decoration: BoxDecoration(
-                    color: _getWaterColor(_animation.value),
+                    color: waterColor,
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
@@ -89,12 +94,5 @@ class _WaterLevelIndicatorState extends State<WaterLevelIndicator>
         );
       },
     );
-  }
-
-  Color _getWaterColor(double progress) {
-    if (progress >= 1.0) return Colors.green;
-    if (progress >= 0.7) return Colors.blue;
-    if (progress >= 0.4) return Colors.lightBlue;
-    return Colors.blue[200]!;
   }
 }

@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:prac9/features/water_tracker/data/models/water_intake.dart';
 
-/// Состояние трекера воды - управляет данными о потреблении воды
-/// Использует ChangeNotifier для реактивного обновления UI
-class WaterTrackerState extends ChangeNotifier {
+class WaterRepository extends ChangeNotifier {
   final List<WaterIntake> _intakes = [];
 
   List<WaterIntake> get intakes => List.unmodifiable(_intakes);

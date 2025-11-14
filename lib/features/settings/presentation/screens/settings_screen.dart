@@ -1,87 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:prac9/core/di/service_locator.dart';
-import 'package:prac9/features/settings/domain/services/settings_service.dart';
+import 'package:prac9/features/settings/presentation/cubit/settings_cubit.dart';
 
-class SettingsScreen extends StatefulWidget {
+
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  final SettingsService _settingsService = serviceLocator<SettingsService>();
-  final TextEditingController _goalController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _goalController.text = _settingsService.dailyGoal.toString();
-    _settingsService.addListener(_onSettingsChanged);
-  }
-
-  void _onSettingsChanged() => setState(() {});
-
-  void _updateDailyGoal() {
-    final newGoal = int.tryParse(_goalController.text) ?? 2000;
-    _settingsService.updateDailyGoal(newGoal);
+  void _submitGoal(BuildContext context) {
+    final cubit = context.read<SettingsCubit>();
+    cubit.submitGoal();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Дневная цель обновлена: $newGoal мл'),
-        duration: const Duration(seconds: 2),
+      const SnackBar(
+        content: Text('Дневная цель обновлена'),
+        duration: Duration(seconds: 2),
       ),
     );
   }
 
-  void _resetToDefault() {
-    _settingsService.updateDailyGoal(2000);
-    _goalController.text = '2000';
+  void _resetToDefault(BuildContext context) {
+    final cubit = context.read<SettingsCubit>();
+    cubit.resetToDefault();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Настройки сброшены к значениям по умолчанию'),
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _goalController.dispose();
-    _settingsService.removeListener(_onSettingsChanged);
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Настройки'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.restart_alt),
-            onPressed: _resetToDefault,
-            tooltip: 'Сбросить настройки',
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildDailyGoalSection(),
-          const SizedBox(height: 24),
-          _buildAppearanceSection(),
-          const SizedBox(height: 24),
-        ],
+    return BlocListener<SettingsCubit, SettingsState>(
+      listener: (context, state) {
+        // Можно добавить обработку специфических состояний если нужно
+      },
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        builder: (context, state) {
+          final cubit = context.read<SettingsCubit>();
+
+          if (state is SettingsLoaded) {
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Настройки'),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => context.pop(),
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.restart_alt),
+                    onPressed: () => _resetToDefault(context),
+                    tooltip: 'Сбросить настройки',
+                  ),
+                ],
+              ),
+              body: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildDailyGoalSection(context, state, cubit),
+                  const SizedBox(height: 24),
+                  _buildAppearanceSection(context, state, cubit),
+                ],
+              ),
+            );
+          }
+
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildDailyGoalSection() {
+  Widget _buildDailyGoalSection(BuildContext context, SettingsLoaded state, SettingsCubit cubit) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -103,21 +96,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _goalController,
+              onChanged: cubit.updateGoalText,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Дневная цель',
                 hintText: 'Введите количество в мл',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 suffixText: 'мл',
-                prefixIcon: Icon(Icons.flag),
+                prefixIcon: const Icon(Icons.flag),
+                errorText: state.goalText.isNotEmpty && !state.isGoalValid
+                    ? 'Введите число больше 0'
+                    : null,
               ),
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _updateDailyGoal,
+                onPressed: state.isGoalValid ? () => _submitGoal(context) : null,
                 icon: const Icon(Icons.save),
                 label: const Text('Сохранить цель'),
                 style: ElevatedButton.styleFrom(
@@ -131,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildAppearanceSection() {
+  Widget _buildAppearanceSection(BuildContext context, SettingsLoaded state, SettingsCubit cubit) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -149,8 +145,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SwitchListTile(
               title: const Text('Тёмная тема'),
               subtitle: const Text('Переключение между светлой и тёмной темой'),
-              value: _settingsService.isDarkMode,
-              onChanged: (value) => _settingsService.toggleTheme(),
+              value: state.isDarkMode,
+              onChanged: (value) => cubit.toggleDarkMode(),
               secondary: const Icon(Icons.dark_mode),
             ),
           ],

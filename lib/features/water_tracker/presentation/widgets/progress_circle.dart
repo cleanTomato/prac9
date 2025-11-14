@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:prac9/core/di/service_locator.dart';
+import 'package:prac9/core/services/ui_logic_service.dart';
 
 class ProgressCircle extends StatelessWidget {
   final double progress;
@@ -14,6 +16,9 @@ class ProgressCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final UILogicService _uiLogicService = serviceLocator<UILogicService>();
+    final progressColor = _uiLogicService.getProgressColor(progress);
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -24,9 +29,7 @@ class ProgressCircle extends StatelessWidget {
             value: progress.clamp(0.0, 1.0),
             strokeWidth: 12,
             backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              _getProgressColor(progress),
-            ),
+            valueColor: AlwaysStoppedAnimation<Color>(progressColor),
           ),
         ),
         Column(
@@ -50,12 +53,5 @@ class ProgressCircle extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  Color _getProgressColor(double progress) {
-    if (progress >= 1.0) return Colors.green;
-    if (progress >= 0.7) return Colors.blue;
-    if (progress >= 0.4) return Colors.lightBlue;
-    return Colors.blueAccent;
   }
 }

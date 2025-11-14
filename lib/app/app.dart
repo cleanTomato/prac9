@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:prac9/core/di/service_locator.dart';
-import 'package:prac9/features/settings/domain/services/settings_service.dart';
 import 'package:prac9/app/routes.dart';
+import 'package:prac9/core/di/service_locator.dart';
+import 'package:prac9/features/settings/domain/repositories/settings_repository.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -11,22 +11,19 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  // Получаем сервис настроек через GetIt
-  late final SettingsService _settingsService;
+  final SettingsRepository _settingsRepository = serviceLocator<SettingsRepository>();
 
   @override
   void initState() {
     super.initState();
-    _settingsService = serviceLocator<SettingsService>();
-    // Подписываемся на изменения темы для перерисовки UI
-    _settingsService.addListener(_onSettingsChanged);
+    _settingsRepository.addListener(_onSettingsChanged);
   }
 
   void _onSettingsChanged() => setState(() {});
 
   @override
   void dispose() {
-    _settingsService.removeListener(_onSettingsChanged);
+    _settingsRepository.removeListener(_onSettingsChanged);
     super.dispose();
   }
 
@@ -34,7 +31,7 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Трекер водного баланса',
-      theme: _settingsService.isDarkMode ? ThemeData.dark() : ThemeData.light(),
+      theme: _settingsRepository.isDarkMode ? ThemeData.dark() : ThemeData.light(),
       routerConfig: AppRoutes.router,
       debugShowCheckedModeBanner: false,
     );
