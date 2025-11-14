@@ -14,6 +14,7 @@ class WaterTrackerScreen extends StatelessWidget {
 
 
 
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<WaterTrackerCubit, WaterTrackerState>(
