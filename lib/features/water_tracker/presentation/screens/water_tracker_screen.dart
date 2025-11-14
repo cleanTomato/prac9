@@ -11,6 +11,7 @@ import 'package:prac9/features/water_tracker/presentation/widgets/progress_circl
 class WaterTrackerScreen extends StatelessWidget {
   const WaterTrackerScreen({super.key});
 
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<WaterTrackerCubit, WaterTrackerState>(
