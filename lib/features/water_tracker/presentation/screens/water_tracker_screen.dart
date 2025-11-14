@@ -12,6 +12,7 @@ class WaterTrackerScreen extends StatelessWidget {
   const WaterTrackerScreen({super.key});
 
 
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<WaterTrackerCubit, WaterTrackerState>(
